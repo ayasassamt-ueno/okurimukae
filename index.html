@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>おくりむかえ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #4FC3F7;
+    --sky-deep: #0288D1;
+    --sun: #FFD54F;
+    --grass: #66BB6A;
+    --coral: #FF7043;
+    --bg: #F0F8FF;
+    --card: #FFFFFF;
+    --text: #1A2B3C;
+    --muted: #7B9BB5;
+    --shadow: 0 4px 20px rgba(4,80,144,0.10);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* PHONE FRAME */
+  .phone {
+    width: 390px;
+    min-height: 844px;
+    background: var(--bg);
+    border-radius: 40px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.18), 0 0 0 8px #1a2b3c;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 30px 0 40px;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: var(--sky);
+    padding: 12px 24px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(145deg, var(--sky) 0%, var(--sky-deep) 100%);
+    padding: 16px 20px 20px;
+    color: white;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .app-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .app-name span { color: var(--sun); }
+  .avatar-group { display: flex; }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-left: -8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .av1 { background: #FF7043; margin-left: 0; }
+  .av2 { background: #66BB6A; }
+  .av3 { background: #AB47BC; }
+  .av4 { background: #26A69A; }
+
+  .today-card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 12px 14px;
+    backdrop-filter: blur(4px);
+  }
+  .today-label { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+  .today-info { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .badge {
+    background: var(--sun);
+    color: #7B5800;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  /* TABS */
+  .tabs {
+    background: white;
+    display: flex;
+    border-bottom: 1px solid #E8F0F8;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab {
+    flex: 1;
+    padding: 14px 0 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--sky-deep);
+    border-bottom-color: var(--sky-deep);
+    font-weight: 700;
+  }
+  .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  /* CONTENT */
+  .content { flex: 1; padding: 16px; overflow-y: auto; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* WEEK ROW */
+  .week-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .day-cell {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 4px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .day-cell:active { transform: scale(0.95); }
+  .day-cell.today {
+    background: var(--sky-deep);
+    color: white;
+  }
+  .day-name { font-size: 10px; font-weight: 600; margin-bottom: 4px; color: var(--muted); }
+  .day-cell.today .day-name { color: rgba(255,255,255,0.7); }
+  .day-num { font-size: 16px; font-weight: 700; }
+  .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--coral); margin: 4px auto 0; }
+  .day-cell.today .day-dot { background: var(--sun); }
+
+  /* SCHEDULE CARDS */
+  .schedule-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border-left: 4px solid var(--sky);
+  }
+  .schedule-card:active { transform: scale(0.98); }
+  .schedule-card.mine { border-left-color: var(--grass); }
+  .schedule-card.alert { border-left-color: var(--coral); }
+  .time-block { text-align: center; min-width: 44px; }
+  .time-main { font-size: 16px; font-weight: 700; color: var(--sky-deep); }
+  .schedule-card.mine .time-main { color: var(--grass); }
+  .schedule-card.alert .time-main { color: var(--coral); }
+  .time-ampm { font-size: 10px; color: var(--muted); }
+  .sched-info { flex: 1; }
+  .sched-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .sched-sub { font-size: 12px; color: var(--muted); }
+  .sched-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: white; flex-shrink: 0; }
+
+  /* SHIFT GRID */
+  .shift-grid {
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+  }
+  .shift-header {
+    display: grid;
+    grid-template-columns: 70px repeat(5, 1fr);
+    background: var(--sky-deep);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .shift-header div, .shift-row div {
+    padding: 10px 4px;
+    text-align: center;
+  }
+  .shift-row {
+    display: grid;
+    grid-template-columns: 70px repeat(5, 1fr);
+    border-bottom: 1px solid #EEF4FA;
+    font-size: 12px;
+  }
+  .shift-row:last-child { border-bottom: none; }
+  .shift-name { font-weight: 600; color: var(--text); text-align: left !important; padding-left: 12px !important; }
+  .shift-cell { color: var(--muted); }
+  .shift-cell.on {
+    color: white;
+    font-weight: 700;
+    background: var(--sky);
+    border-radius: 6px;
+    margin: 4px;
+    padding: 4px !important;
+  }
+  .shift-cell.me { background: var(--grass); }
+
+  /* ADD BUTTON */
+  .add-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--sky-deep);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(2,136,209,0.35);
+    margin-bottom: 16px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .add-btn:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(2,136,209,0.25); }
+
+  /* CHAT */
+  .chat-list { display: flex; flex-direction: column; gap: 8px; }
+  .chat-item {
+    background: white;
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .chat-body { flex: 1; overflow: hidden; }
+  .chat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .chat-name { font-size: 13px; font-weight: 700; }
+  .chat-time { font-size: 11px; color: var(--muted); }
+  .chat-msg { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .unread-dot {
+    width: 8px; height: 8px;
+    background: var(--coral);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  /* CHAT ROOM */
+  .chat-room { display: none; flex-direction: column; height: 100%; }
+  .chat-room.open { display: flex; }
+  .chat-room-header {
+    background: var(--sky-deep);
+    color: white;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .back-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 0 8px 0 0; }
+  .room-title { font-size: 15px; font-weight: 700; }
+  .messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg);
+  }
+  .msg { display: flex; gap: 8px; max-width: 85%; }
+  .msg.mine { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
+  .msg-bubble {
+    background: white;
+    border-radius: 14px 14px 14px 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .msg.mine .msg-bubble {
+    background: var(--sky-deep);
+    color: white;
+    border-radius: 14px 14px 4px 14px;
+  }
+  .msg-time { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: right; }
+  .msg.mine .msg-time { color: rgba(255,255,255,0.7); }
+  .chat-input-row {
+    background: white;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #EEF4FA;
+  }
+  .chat-input {
+    flex: 1;
+    border: 1.5px solid #D0E8F5;
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    background: var(--bg);
+  }
+  .send-btn {
+    width: 40px; height: 40px;
+    background: var(--sky-deep);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* NAV */
+  .bottom-nav {
+    background: white;
+    display: flex;
+    border-top: 1px solid #E8F0F8;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .nav-item {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .nav-item.active { color: var(--sky-deep); }
+  .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+
+  /* PAGES */
+  .page { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .page.active { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>📶 🔋</span>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="app-name">おくり<span>むかえ</span></div>
+      <div class="avatar-group">
+        <div class="avatar av1">田</div>
+        <div class="avatar av2">鈴</div>
+        <div class="avatar av3">中</div>
+        <div class="avatar av4">佐</div>
+      </div>
+    </div>
+    <div class="today-card">
+      <div class="today-label">今日の担当</div>
+      <div class="today-info">
+        🚗 田中さんが送迎担当
+        <span class="badge">あなたの番</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('schedule', this)">
+      <span class="tab-icon">📅</span>スケジュール
+    </div>
+    <div class="tab" onclick="switchTab('shift', this)">
+      <span class="tab-icon">🔄</span>シフト
+    </div>
+    <div class="tab" onclick="switchTab('chat', this)">
+      <span class="tab-icon">💬</span>チャット
+    </div>
+  </div>
+
+  <!-- SCHEDULE PAGE -->
+  <div class="page active" id="page-schedule">
+    <div class="content">
+      <!-- WEEK -->
+      <div class="week-row">
+        <div class="day-cell">
+          <div class="day-name">月</div>
+          <div class="day-num">7</div>
+        </div>
+        <div class="day-cell">
+          <div class="day-name">火</div>
+          <div class="day-num">8</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-cell">
+          <div class="day-name">水</div>
+          <div class="day-num">9</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-cell today">
+          <div class="day-name">木</div>
+          <div class="day-num">10</div>
+          <div class="day-dot"></div>
+        </div>
+        <div class="day-cell">
+          <div class="day-name">金</div>
+          <div class="day-num">11</div>
+        </div>
+        <div class="day-cell">
+          <div class="day-name">土</div>
+          <div class="day-num">12</div>
+          <div class="day-dot"></div>
+        </div>
+      </div>
+
+      <div class="section-title">4月10日（木）のスケジュール</div>
+
+      <div class="schedule-card mine">
+        <div class="time-block">
+          <div class="time-main">7:45</div>
+          <div class="time-ampm">AM</div>
+        </div>
+        <div class="sched-info">
+          <div class="sched-title">🏫 保育園への送り</div>
+          <div class="sched-sub">担当：田中さん（あなた） · 桜、蓮</div>
+        </div>
+        <div class="sched-avatar av1">田</div>
+      </div>
+
+      <div class="schedule-card">
+        <div class="time-block">
+          <div class="time-main">3:30</div>
+          <div class="time-ampm">PM</div>
+        </div>
+        <div class="sched-info">
+          <div class="sched-title">🏠 保育園からのお迎え</div>
+          <div class="sched-sub">担当：鈴木さん · 桜、蓮、葵</div>
+        </div>
+        <div class="sched-avatar av2">鈴</div>
+      </div>
+
+      <div class="schedule-card alert">
+        <div class="time-block">
+          <div class="time-main">5:00</div>
+          <div class="time-ampm">PM</div>
+        </div>
+        <div class="sched-info">
+          <div class="sched-title">⚽ サッカー教室送迎</div>
+          <div class="sched-sub">担当未定 · 確認してください</div>
+        </div>
+        <div class="sched-avatar" style="background:#FF7043;">!</div>
+      </div>
+
+      <button class="add-btn" onclick="showToast('スケジュール追加画面')">
+        ＋ スケジュールを追加
+      </button>
+
+      <div class="section-title">明日のスケジュール</div>
+
+      <div class="schedule-card">
+        <div class="time-block">
+          <div class="time-main">8:00</div>
+          <div class="time-ampm">AM</div>
+        </div>
+        <div class="sched-info">
+          <div class="sched-title">🏫 保育園への送り</div>
+          <div class="sched-sub">担当：中村さん · 桜、葵</div>
+        </div>
+        <div class="sched-avatar av3">中</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHIFT PAGE -->
+  <div class="page" id="page-shift">
+    <div class="content">
+      <div class="section-title">今週のシフト（4/7〜4/12）</div>
+
+      <div class="shift-grid">
+        <div class="shift-header">
+          <div></div>
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+        </div>
+        <div class="shift-row">
+          <div class="shift-name">田中</div>
+          <div class="shift-cell on me">朝</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell on me">朝</div>
+          <div class="shift-cell">-</div>
+        </div>
+        <div class="shift-row">
+          <div class="shift-name">鈴木</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell on">夕</div>
+          <div class="shift-cell on">朝</div>
+          <div class="shift-cell on">夕</div>
+          <div class="shift-cell">-</div>
+        </div>
+        <div class="shift-row">
+          <div class="shift-name">中村</div>
+          <div class="shift-cell on">夕</div>
+          <div class="shift-cell on">朝</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell on">朝</div>
+        </div>
+        <div class="shift-row">
+          <div class="shift-name">佐藤</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell on">夕</div>
+          <div class="shift-cell">-</div>
+          <div class="shift-cell on">夕</div>
+        </div>
+      </div>
+
+      <button class="add-btn" onclick="showToast('シフト変更リクエスト')">
+        🔄 シフト変更をリクエスト
+      </button>
+
+      <div class="section-title">来週の割り当て</div>
+      <div style="background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);font-size:13px;color:var(--muted);text-align:center;">
+        <div style="font-size:32px;margin-bottom:8px;">📋</div>
+        来週のシフトはまだ確定していません<br>
+        <span style="color:var(--sky-deep);font-weight:600;cursor:pointer;" onclick="showToast('シフト希望を送信しました！')">→ 希望を入力する</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT PAGE -->
+  <div class="page" id="page-chat">
+    <div id="chat-list-view">
+      <div class="content">
+        <div class="section-title">グループチャット</div>
+        <div class="chat-list">
+          <div class="chat-item" onclick="openChat('🏘️ 保護者グループ', '田中さん：今日よろしくお願いします！')">
+            <div class="sched-avatar av1" style="width:44px;height:44px;border-radius:12px;font-size:20px;">🏘️</div>
+            <div class="chat-body">
+              <div class="chat-top">
+                <div class="chat-name">保護者グループ</div>
+                <div class="chat-time">9:32</div>
+              </div>
+              <div class="chat-msg">田中さん：今日よろしくお願いします！</div>
+            </div>
+            <div class="unread-dot"></div>
+          </div>
+
+          <div class="chat-item" onclick="openChat('🔄 シフト調整', '5月の希望を提出してください')">
+            <div class="sched-avatar av2" style="width:44px;height:44px;border-radius:12px;font-size:20px;">🔄</div>
+            <div class="chat-body">
+              <div class="chat-top">
+                <div class="chat-name">シフト調整</div>
+                <div class="chat-time">昨日</div>
+              </div>
+              <div class="chat-msg">5月の希望を提出してください</div>
+            </div>
+          </div>
+
+          <div class="chat-item" onclick="openChat('🚗 田中・鈴木', '木曜お願いできますか？')">
+            <div style="display:flex;width:44px;height:44px;position:relative;flex-shrink:0;">
+              <div class="avatar av1" style="position:absolute;top:0;left:0;width:30px;height:30px;font-size:12px;margin:0;border:1.5px solid white;z-index:1;"></div>
+              <div class="avatar av2" style="position:absolute;bottom:0;right:0;width:30px;height:30px;font-size:12px;margin:0;border:1.5px solid white;"></div>
+            </div>
+            <div class="chat-body">
+              <div class="chat-top">
+                <div class="chat-name">田中・鈴木</div>
+                <div class="chat-time">月曜</div>
+              </div>
+              <div class="chat-msg">木曜お願いできますか？</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="add-btn" style="margin-top:16px;" onclick="showToast('新しいチャットを作成')">
+          ＋ 新しいチャット
+        </button>
+      </div>
+    </div>
+
+    <!-- CHAT ROOM -->
+    <div class="chat-room" id="chat-room-view">
+      <div class="chat-room-header">
+        <button class="back-btn" onclick="closeChat()">←</button>
+        <div>
+          <div class="room-title" id="room-title">保護者グループ</div>
+          <div style="font-size:11px;opacity:0.75;">4人のメンバー</div>
+        </div>
+      </div>
+      <div class="messages" id="messages">
+        <div class="msg">
+          <div class="msg-avatar av2">鈴</div>
+          <div>
+            <div class="msg-bubble">おはようございます！今日もよろしくお願いします🙏</div>
+            <div class="msg-time">9:15</div>
+          </div>
+        </div>
+        <div class="msg">
+          <div class="msg-avatar av3">中</div>
+          <div>
+            <div class="msg-bubble">よろしくお願いします！夕方は鈴木さんですね？</div>
+            <div class="msg-time">9:20</div>
+          </div>
+        </div>
+        <div class="msg mine">
+          <div class="msg-avatar av1">田</div>
+          <div>
+            <div class="msg-bubble">朝の送りは私が担当します！7:45に出発予定です</div>
+            <div class="msg-time">9:32</div>
+          </div>
+        </div>
+        <div class="msg">
+          <div class="msg-avatar av2">鈴</div>
+          <div>
+            <div class="msg-bubble">夕方は私が迎えに行きます👍 3:30ごろ到着予定</div>
+            <div class="msg-time">9:35</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="msg-input" placeholder="メッセージを入力..." type="text" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="send-btn" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-schedule" onclick="switchNav('schedule')">
+      <span class="nav-icon">📅</span>予定
+    </div>
+    <div class="nav-item" id="nav-shift" onclick="switchNav('shift')">
+      <span class="nav-icon">🔄</span>シフト
+    </div>
+    <div class="nav-item" id="nav-chat" onclick="switchNav('chat')">
+      <span class="nav-icon">💬</span>チャット
+    </div>
+    <div class="nav-item" id="nav-profile" onclick="showToast('プロフィール設定')">
+      <span class="nav-icon">👤</span>マイページ
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1A2B3C;color:white;padding:10px 20px;border-radius:24px;font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;z-index:999;"></div>
+
+<script>
+  const tabMap = { schedule: 0, shift: 1, chat: 2 };
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    switchNav(name);
+  }
+
+  function switchNav(name) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const nav = document.getElementById('nav-' + name);
+    if (nav) nav.classList.add('active');
+    if (['schedule','shift','chat'].includes(name)) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', i === tabMap[name]);
+      });
+    }
+  }
+
+  function openChat(title, lastMsg) {
+    document.getElementById('room-title').textContent = title;
+    document.getElementById('chat-list-view').style.display = 'none';
+    document.getElementById('chat-room-view').classList.add('open');
+  }
+
+  function closeChat() {
+    document.getElementById('chat-list-view').style.display = '';
+    document.getElementById('chat-room-view').classList.remove('open');
+  }
+
+  function sendMsg() {
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const messages = document.getElementById('messages');
+    const now = new Date();
+    const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+    const div = document.createElement('div');
+    div.className = 'msg mine';
+    div.innerHTML = `<div class="msg-avatar av1">田</div><div><div class="msg-bubble">${text}</div><div class="msg-time">${time}</div></div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    input.value = '';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2000);
+  }
+</script>
+</body>
+</html>
